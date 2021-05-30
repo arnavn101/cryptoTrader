@@ -63,15 +63,21 @@ class PercentageStrategy(TradingStrategy):
 
     """
 
-    def __init__(self, initialPortfolioValue, fractionCoin, percentThreshold,
-                 timePeriod, thresholdTransaction, transactionFees, typeTime='hour'):
+    def __init__(self, cryptoSymbol, initialPortfolioValue, fractionCoin, percentThreshold,
+                 timePeriod, thresholdTransaction, transactionFees, typeTime):
         super(PercentageStrategy, self).__init__(initialPortfolioValue)
         self.fractionCoin = fractionCoin
         self.percentThreshold = percentThreshold
         self.thresholdTransaction = thresholdTransaction
         self.transactionFees = transactionFees
         self.profitCounter, self.lossCounter = 0, 0
-        self.CryptoPriceAPI = CryptoCompareEndpoint('BTC', 'USD', timePeriod, typeData=typeTime)
+        self.toMul = {
+            'day': 1,
+            'hour': 24,
+            'minute': 1440,
+        }
+        self.CryptoPriceAPI = CryptoCompareEndpoint(cryptoSymbol, 'USD', self.toMul[typeTime] * timePeriod,
+                                                    typeData=typeTime)
         self.executeStrategy()
 
     def executeStrategy(self):
@@ -109,17 +115,23 @@ class PercentageStrategy(TradingStrategy):
 
         self.finalizeStrategy(listPrices)
 
+    @staticmethod
+    def round2(inpNum):
+        return round(inpNum, 2)
+
     def finalizeStrategy(self, listPrices):
         print(f"Coins in Holding: {self.numberCoins}")
-        print(f"Current Portfolio Value: {self.portfolioValue}")
+        print(f"Current Portfolio Value: ${self.round2(self.portfolioValue)}")
 
         finalPrice = float(listPrices[-1])
-        finalPortfolioValue = self.portfolioValue + (finalPrice * self.numberCoins)
+        finalPortfolioValue = self.round2(self.portfolioValue + (finalPrice * self.numberCoins))
         print(f"Total number of Transactions: {self.numberTransactions}")
-        print(f"Total Portfolio Value: {finalPortfolioValue}")
+        print(f"Total Portfolio Value: ${finalPortfolioValue}")
 
-        print(f"Total Amount of Profit: {finalPortfolioValue - self.initialPortfolioValue}")
+        print(f"Total Amount of Profit: ${self.round2(finalPortfolioValue - self.initialPortfolioValue)}")
 
 
-#  (initialPortfolioValue, fractionCoin, percentThreshold, timePeriod, thresholdTransaction, transactionFees, typeTime)
-# realtimeStrategy = PercentageStrategy(100000, 3, 0.005, 24, 2, 0, 'hour')
+# Below is an example of simulating virtual trading with Dogecoin
+# realtimeStrategy = PercentageStrategy(cryptoSymbol='DOGE', initialPortfolioValue=100000, fractionCoin=3,
+#                                       percentThreshold=0.005, timePeriod=30, thresholdTransaction=2,
+#                                       transactionFees=0, typeTime='minute')

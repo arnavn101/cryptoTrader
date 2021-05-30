@@ -31,21 +31,30 @@ class CoinMarketEndpoint:
 
 
 class CryptoCompareEndpoint:
+    # https://min-api.cryptocompare.com
     def __init__(self, fromCurr, toCurr, limitData, endTimeStamp=None, typeData='hour'):
         self.baseURL = f'https://min-api.cryptocompare.com/data/histo{typeData}?'
 
         if not endTimeStamp:
             endTimeStamp = str(int(time.time()))
 
+        # CryptoCompare only allows upto 2000 results per call
+        self.maxLimit = 2000
+        self.limExceededBy = None
         self.thisURL = self.formulateURL(fromCurr, toCurr, str(limitData - 1), endTimeStamp)
         self.responseData = CryptoCompareEndpoint.hitSpecifiedURL(self.thisURL)
 
     def formulateURL(self, fromCurr, toCurr, limitData, endTimeStamp):
         requestArguments = list()
+        limitData = int(limitData)
 
         requestArguments.append('fsym=' + fromCurr)
         requestArguments.append('tsym=' + toCurr)
-        requestArguments.append('limit=' + limitData)
+        requestArguments.append('limit=' + str(max(self.maxLimit, limitData)))
+
+        if limitData > self.maxLimit:
+            self.limExceededBy = limitData - self.maxLimit
+
         requestArguments.append('toTs=' + endTimeStamp)
 
         return self.baseURL + '&'.join(requestArguments)
